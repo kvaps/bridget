@@ -86,6 +86,7 @@ if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$FORCE_VLAN_CONFIG" == 1 ]; the
         ip link add link "$IFACE" name "$IFACE.$VLAN" type vlan id "$VLAN"
         ip link set dev "$IFACE.$VLAN" master "$BRIDGE"
     fi
+    ip link set dev "$IFACE.$VLAN" up
 fi
 
 # ------------------------------------------------------------------------------------
