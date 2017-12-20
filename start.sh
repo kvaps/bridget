@@ -4,10 +4,10 @@ usage() {
 cat <<EOF
 
   Available variables:
-    - BRIDGE (default: cbr0)
+    - BRIDGE (example: cbr0)
     - VLAN (example: 100)
     - IFACE (example: eth0)
-    - MTU (default: 9000)
+    - MTU (default: 1500)
     - NO_DHCP_CLIENT (example: 1)
     - FORCE_VLAN_CONFIG (example: 1)
 
