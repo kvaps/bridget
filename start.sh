@@ -100,7 +100,7 @@ cat > /etc/cni/net.d/10-br-dhcp.conf <<EOT
         "hairpinMode": true,
         "mtu": "${MTU:-1500}",
         "ipam": {
-                "type": "host-local",
+                "type": "dhcp",
                 "gateway": "${IPADDR}"
         }
 }
