@@ -8,7 +8,6 @@ cat <<EOF
     - VLAN (example: 100)
     - IFACE (example: eth0)
     - MTU (default: 1500)
-    - NO_DHCP_CLIENT (example: 1)
     - FORCE_VLAN_CONFIG (example: 1)
 
 Short workflow:
@@ -49,16 +48,16 @@ ip link set "$BRIDGE" up
 # Configure IP-address
 # ------------------------------------------------------------------------------------
 
-# Check ip address lifetime
-VALID_LFT="$(ip -f inet -o addr show "$BRIDGE" 2> /dev/null | grep -o 'valid_lft [^ /]*' | cut -d' ' -f2)"
+# Check ip address
+IPADDR="$(ip -f inet -o addr show "$BRIDGE" | grep -o 'inet [^ /]*' | cut -d' ' -f2)"
 
-# If lifetime is not forever then we need DHCP-client
-if [ "$VALID_LFT" != "forever" ] && [ "$NO_DHCP_CLIENT" != 1]; then
-    if ! udhcpc -i "$BRIDGE"; then
+# If ip not exist 
+if [ -z "$IPADDR" ]; then
+    echo -e '#!/bin/sh\nip addr change $siaddr/$mask dev $interface' > /tmp/udhcpc-script.sh
+    chmod +x /tmp/udhcpc-script.sh
+    if ! udhcpc -q -i "$BRIDGE" -s /tmp/udhcpc-script.sh; then
         error "Can not rerive IP for the bridge interface"
     fi
-elif [ "$VALID_LFT" == "" ] && [ "$NO_DHCP_CLIENT" == 1]; then
-    error "NO_DHCP_CLIENT variable is set, but bridge have no any ip address"
 fi
 
 IPADDR="$(ip -f inet -o addr show "$BRIDGE" | grep -o 'inet [^ /]*' | cut -d' ' -f2)"
