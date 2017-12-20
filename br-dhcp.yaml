@@ -1,0 +1,42 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: br-dhcp
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: br-dhcp
+    spec:
+      hostNetwork: true
+      hostPID: true
+
+      containers:
+      - name: br-dhcp
+        image: alpine
+        command: ["sh", "-c", "tail -f /dev/null"]
+        env:
+        - name: BRIDGE
+          value: "vmbr0"
+        - name: VLAN
+          value: "100"
+        - name: IFACE
+          value: "bond0"
+        securityContext:
+          capabilities:
+            add: ["NET_ADMIN"]
+        volumeMounts:
+        - name: run
+          mountPath: /run
+        - name: cni
+          mountPath: /etc/cni/net.d
+        - name: flannel-cfg
+          mountPath: /etc/kube-flannel/
+      volumes:
+        - name: run
+          hostPath:
+            path: /run
+        - name: cni
+          hostPath:
+            path: /etc/cni/net.d
