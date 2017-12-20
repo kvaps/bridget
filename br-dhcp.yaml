@@ -24,7 +24,9 @@ spec:
           value: "bond0"
         securityContext:
           capabilities:
-            add: ["NET_ADMIN"]
+            add:
+            - NET_ADMIN
+            - SYS_ADMIN
         volumeMounts:
         - name: netns-run
           mountPath: /var/run/netns

@@ -98,7 +98,7 @@ cat > /etc/cni/net.d/10-br-dhcp.conf <<EOT
         "type": "bridge",
         "bridge": "${BRIDGE}",
         "hairpinMode": true,
-        "mtu": "${MTU:-1500}",
+        "mtu": ${MTU:-1500},
         "ipam": {
                 "type": "dhcp",
                 "gateway": "${IPADDR}"
