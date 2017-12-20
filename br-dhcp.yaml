@@ -26,6 +26,8 @@ spec:
           capabilities:
             add: ["NET_ADMIN"]
         volumeMounts:
+        - name: netns-run
+          mountPath: /var/run/netns
         - name: cni-run
           mountPath: /run/cni
         - name: cni-cfg
@@ -42,3 +44,6 @@ spec:
         - name: cni-bin
           hostPath:
             path: /opt/cni/bin
+        - name: netns-run
+          hostPath:
+            path: /var/run/netns
