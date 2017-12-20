@@ -7,7 +7,9 @@ cat <<EOF
     - BRIDGE (default: cbr0)
     - VLAN (example: 100)
     - IFACE (example: eth0)
-    - MTU (example: 9000)
+    - MTU (default: 9000)
+    - NO_DHCP_CLIENT (example: 1)
+    - FORCE_VLAN_CONFIG (example: 1)
 
 Short workflow:
 
@@ -38,6 +40,7 @@ error() {
 # Check if bridge interface exist
 if ! ip link show "$BRIDGE" &> /dev/null; then
     ip link add dev "$BRIDGE" type bridge
+    export FORCE_VLAN_CONFIG=1
 fi
 
 ip link set "$BRIDGE" up
@@ -64,7 +67,7 @@ IPADDR="$(ip -f inet -o addr show "$BRIDGE" | grep -o 'inet [^ /]*' | cut -d' ' 
 # ------------------------------------------------------------------------------------
 # Configure vlan
 # ------------------------------------------------------------------------------------
-if [ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]; then
+if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$FORCE_VLAN_CONFIG" == 1 ]; then
     [ -z "$VLAN" ] && error "VLAN variable is not defined"
     [ -z "$IFACE" ] && error "IFACE variable is not defined"
 
