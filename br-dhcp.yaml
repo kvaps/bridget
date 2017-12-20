@@ -14,8 +14,7 @@ spec:
 
       containers:
       - name: br-dhcp
-        image: alpine
-        command: ["sh", "-c", "tail -f /dev/null"]
+        image: kvaps/br-dhcp
         env:
         - name: BRIDGE
           value: "vmbr0"
@@ -27,16 +26,19 @@ spec:
           capabilities:
             add: ["NET_ADMIN"]
         volumeMounts:
-        - name: run
-          mountPath: /run
-        - name: cni
+        - name: cni-run
+          mountPath: /run/cni
+        - name: cni-cfg
           mountPath: /etc/cni/net.d
-        - name: flannel-cfg
-          mountPath: /etc/kube-flannel/
+        - name: cni-bin
+          mountPath: /opt/cni/bin
       volumes:
-        - name: run
+        - name: cni-run
           hostPath:
-            path: /run
-        - name: cni
+            path: /run/cni
+        - name: cni-cfg
           hostPath:
             path: /etc/cni/net.d
+        - name: cni-bin
+          hostPath:
+            path: /opt/cni/bin
