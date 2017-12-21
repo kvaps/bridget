@@ -9,19 +9,30 @@ spec:
       labels:
         app: bridged
     spec:
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
       hostNetwork: true
       hostPID: true
-
       containers:
       - name: bridged
         image: kvaps/bridged
         env:
         - name: BRIDGE
           value: "cbr0"
-        - name: VLAN
-          value: "4"
-        - name: IFACE
-          value: "bond0"
+        #- name: VLAN
+        #  value: "4"
+        #- name: IFACE
+        #  value: "bond0"
+        #- name: MTU
+        #  value: "1500"
+        #- name: FORCE_VLAN_CONFIG
+        #  value: "1"
+        #- name: POD_NETWORK
+        #  value: "10.244.0.0/16"
+        #- name: DIVISION_PREFIX
+        #  value: "24"
         securityContext:
           capabilities:
             add:
