@@ -1,5 +1,7 @@
 #!/bin/sh
 
+CNI_CONFIG="${CNI_CONFIG:-/etc/cni/net.d/10-br-dhcp.conf}"
+
 usage() {
 cat <<EOF
 
@@ -57,8 +59,10 @@ random_gateway() {
 }
 
 unused_gateway() {
-    local UNUSED_GATEWAY="$(random_gateway)"
-    until ! arpping -c 4 "$UNUSED_GATEWAY" 1>/dev/; do
+    local UNUSED_GATEWAY=$(sed -n 's/.*"gateway": "\(.*\)",/\1/p' "$CNI_CONFIG")
+    [ -z $UNUSED_GATEWAY ] && local UNUSED_GATEWAY="$(random_gateway)"
+
+    while arpping -s 0.0.0.0 -i $BRIDGE -c 4 "$UNUSED_GATEWAY" 1>/dev/; do
         local UNUSED_GATEWAY="$(random_gateway)"
     done
     echo "$UNUSED_GATEWAY"
@@ -156,7 +160,7 @@ SUBNET="${POD_NETWORK}/${POD_PREFIX}"
 FIRST_IP="$(next_ip "${GATEWAY}")"
 LAST_IP="$(prev_ip "$(ipcalc -b "${GATEWAY}/${DIVISION_PREFIX}" | cut -d= -f2)")"
 
-cat > /etc/cni/net.d/10-br-dhcp.conf <<EOT
+cat > $CNI_CONFIG <<EOT
 {
         "name": "container",
         "type": "bridge",
@@ -168,6 +172,7 @@ cat > /etc/cni/net.d/10-br-dhcp.conf <<EOT
                 "subnet": "${SUBNET}",
                 "rangeStart": "${FIRST_IP}",
                 "rangeEnd": "${LAST_IP}",
+                "gateway": "${GATEWAY}",
                 "routes": [
                         { "dst": "0.0.0.0/0" }
                 ]
