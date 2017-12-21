@@ -1,19 +1,20 @@
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
-  name: br-dhcp
+  name: bridged
+  namespace: kube-system
 spec:
   template:
     metadata:
       labels:
-        app: br-dhcp
+        app: bridged
     spec:
       hostNetwork: true
       hostPID: true
 
       containers:
-      - name: br-dhcp
-        image: kvaps/br-dhcp
+      - name: bridged
+        image: kvaps/bridged
         env:
         - name: BRIDGE
           value: "cbr0"
