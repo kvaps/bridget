@@ -53,18 +53,17 @@ random_gateway() {
     local NETWORKS_NUM="$(echo "$NETWORKS_LIST" | wc -l)"
     local RANDOM_NETWORK_NUM="$(shuf -i "1-$NETWORKS_NUM" -n 1)"
     local RANDOM_NETWORK="$(echo "$NETWORKS_LIST" | head -n "$RANDOM_NETWORK_NUM" | tail -n 1)"
-    unset IFS
     local RANDOM_GATEWAY="$(next_ip $RANDOM_NETWORK)"
     echo "$RANDOM_GATEWAY"
 }
 
 unused_gateway() {
-    local UNUSED_GATEWAY=$(sed -n 's/.*"gateway": "\(.*\)",/\1/p' "$CNI_CONFIG")
-    if [ -z $UNUSED_GATEWAY ] || ! right_gateway "$IPADDR"; then
-        local UNUSED_GATEWAY="$(random_gateway)"
+    [ -f "$CNI_CONFIG" ] && local UNUSED_GATEWAY=$(sed -n 's/.*"gateway": "\(.*\)",/\1/p' "$CNI_CONFIG")
+    if [ -z $UNUSED_GATEWAY ] || ! right_gateway "$UNUSED_GATEWAY"; then
+        UNUSED_GATEWAY="$(random_gateway)"
     fi
 
-    while arping -i $BRIDGE -S 0.0.0.0 -c 4 "$UNUSED_GATEWAY" 1>/dev/; do
+    while arping -i $BRIDGE -S 0.0.0.0 -c 4 "$UNUSED_GATEWAY" 1>/dev/null; do
         local UNUSED_GATEWAY="$(random_gateway)"
     done
     echo "$UNUSED_GATEWAY"
@@ -72,7 +71,6 @@ unused_gateway() {
 right_gateway() {
     local IFS=
     echo "$NETWORKS_LIST" | grep -q "$1"
-    unset IFS
 }
 
 # ------------------------------------------------------------------------------------
