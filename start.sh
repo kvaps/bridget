@@ -153,11 +153,15 @@ DIVISION_PREFIX="${DIVISION_PREFIX:-24}"
 log "POD_NETWORK=$POD_NETWORK"
 log "DIVISION_PREFIX=$DIVISION_PREFIX"
 
+set -e
+
 export "POD_$(ipcalc -p "$POD_NETWORK")" # POD_PREFIX
 export "POD_$(ipcalc -b "$POD_NETWORK")" # POD_BROADCAST
 export "POD_$(ipcalc -n "$POD_NETWORK")" # POD_NETWORK
 export "FIRST_$(ipcalc -n "$POD_NETWORK/$DIVISION_PREFIX" )" # FIRST_NETWORK
 export "LAST_$(ipcalc -n "$POD_BROADCAST/$DIVISION_PREFIX" )" # LAST_NETWORK
+
+set +e
 
 debug "POD_PREFIX=$POD_PREFIX"
 debug "POD_BROADCAST=$POD_BROADCAST"
@@ -209,10 +213,14 @@ fi
 
 log "Starting generating CNI configuration"
 
+set -e
+
 GATEWAY="$IPADDR"
 SUBNET="${POD_NETWORK}/${POD_PREFIX}"
 FIRST_IP="$(next_ip "${GATEWAY}")"
 LAST_IP="$(prev_ip "$(ipcalc -b "${GATEWAY}/${DIVISION_PREFIX}" | cut -d= -f2)")"
+
+set +e
 
 debug "GATEWAY=$GATEWAY"
 debug "SUBNET=$SUBNET"
