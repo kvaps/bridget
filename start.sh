@@ -60,9 +60,11 @@ random_gateway() {
 
 unused_gateway() {
     local UNUSED_GATEWAY=$(sed -n 's/.*"gateway": "\(.*\)",/\1/p' "$CNI_CONFIG")
-    [ -z $UNUSED_GATEWAY ] && local UNUSED_GATEWAY="$(random_gateway)"
+    if [ -z $UNUSED_GATEWAY ] || ! right_gateway "$IPADDR"; then
+        local UNUSED_GATEWAY="$(random_gateway)"
+    fi
 
-    while arpping -s 0.0.0.0 -i $BRIDGE -c 4 "$UNUSED_GATEWAY" 1>/dev/; do
+    while arping -i $BRIDGE -S 0.0.0.0 -c 4 "$UNUSED_GATEWAY" 1>/dev/; do
         local UNUSED_GATEWAY="$(random_gateway)"
     done
     echo "$UNUSED_GATEWAY"
@@ -181,7 +183,6 @@ cat > $CNI_CONFIG <<EOT
 EOT
 
 # ------------------------------------------------------------------------------------
-# Run cni dhcp daemon
+# Sleep gently
 # ------------------------------------------------------------------------------------
-rm -f /run/cni/dhcp.sock
-/opt/cni/bin/dhcp daemon
+tail -f /dev/null

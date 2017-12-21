@@ -1,9 +1,8 @@
-apiVersion: apps/v1beta1
-kind: Deployment
+apiVersion: extensions/v1beta1
+kind: DaemonSet
 metadata:
   name: br-dhcp
 spec:
-  replicas: 1
   template:
     metadata:
       labels:
@@ -17,35 +16,19 @@ spec:
         image: kvaps/br-dhcp
         env:
         - name: BRIDGE
-          value: "vmbr0"
+          value: "cbr0"
         - name: VLAN
-          value: "100"
+          value: "4"
         - name: IFACE
           value: "bond0"
         securityContext:
           capabilities:
             add:
             - NET_ADMIN
-            - SYS_ADMIN
         volumeMounts:
-        - name: netns-run
-          mountPath: /var/run/netns
-        - name: cni-run
-          mountPath: /run/cni
         - name: cni-cfg
           mountPath: /etc/cni/net.d
-        - name: cni-bin
-          mountPath: /opt/cni/bin
       volumes:
-        - name: cni-run
-          hostPath:
-            path: /run/cni
         - name: cni-cfg
           hostPath:
             path: /etc/cni/net.d
-        - name: cni-bin
-          hostPath:
-            path: /opt/cni/bin
-        - name: netns-run
-          hostPath:
-            path: /var/run/netns
