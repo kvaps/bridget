@@ -165,7 +165,7 @@ cat > $CNI_CONFIG <<EOT
         "name": "container",
         "type": "bridge",
         "bridge": "${BRIDGE}",
-        "hairpinMode": true,
+        "ipMasq": true,
         "mtu": ${MTU:-1500},
         "ipam": {
                 "type": "host-local",
