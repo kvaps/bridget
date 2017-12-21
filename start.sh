@@ -145,8 +145,8 @@ IPADDR="$(ip -f inet -o addr show "$BRIDGE" | grep -o 'inet [^ /]*' | cut -d' ' 
 
 # If ip not exist 
 if [ -z "$IPADDR" ]; then
-    IPADDR="$(unused_gateway)/$POD_PREFIX"
-    ip addr change $siaddr/$mask dev $interface
+    IPADDR="$(unused_gateway)"
+    ip addr change "$IPADDR/$POD_PREFIX" dev "$BRIDGE"
 else
     if ! right_gateway "$IPADDR"; then
         error "$BRIDGE already have IP address not from the list"
