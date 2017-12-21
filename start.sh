@@ -182,7 +182,7 @@ NETWORKS_LIST="$(
     done
 )"
 
-debug "NETWORKS_LIST=\"$NETWORKS_LIST\""
+debug "NETWORKS_LIST=\"$(echo "$NETWORKS_LIST" | tr '\n' ' ' )\""
 
 # ------------------------------------------------------------------------------------
 # Configure IP-address
