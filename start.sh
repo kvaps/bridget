@@ -53,6 +53,7 @@ random_gateway() {
     local NETWORKS_NUM="$(echo "$NETWORKS_LIST" | wc -l)"
     local RANDOM_NETWORK_NUM="$(shuf -i "1-$NETWORKS_NUM" -n 1)"
     local RANDOM_NETWORK="$(echo "$NETWORKS_LIST" | head -n "$RANDOM_NETWORK_NUM" | tail -n 1)"
+    unset IFS
     local RANDOM_GATEWAY="$(next_ip $RANDOM_NETWORK)"
     echo "$RANDOM_GATEWAY"
 }
