@@ -120,7 +120,7 @@ if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$FORCE_VLAN_CONFIG" == 1 ]; the
         log "VLAN interface $IFACE.$VLAN already exist"
 
         # check vlan interface for master
-        MASTERIF="$(ip -o link show "$IFACE.$VLAN" | grep -o 'master [^ ]\+' | cut -d' ' -f2)"
+        MASTERIF="$(ip -o link show "$IFACE.$VLAN" | grep -o -m1 'master [^ ]\+' | cut -d' ' -f2)"
         case "$MASTERIF" in
             "$BRIDGE" ) log "$IFACE.$VLAN already member of $BRIDGE" ;;
             ""        ) log "Adding $IFACE.$VLAN as member to $BRIDGE"
@@ -182,7 +182,7 @@ debug "NETWORKS_LIST=\"$NETWORKS_LIST\""
 log "Starting configuring IP-address"
 
 # Check ip address
-IPADDR="$(ip -f inet -o addr show "$BRIDGE" | grep -o 'inet [^ /]*' | cut -d' ' -f2)"
+IPADDR="$(ip -f inet -o addr show "$BRIDGE" | grep -o -m1 'inet [^ /]*' | cut -d' ' -f2)"
 
 # If ip not exist 
 if [ -z "$IPADDR" ]; then
