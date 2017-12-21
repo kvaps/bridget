@@ -208,7 +208,7 @@ else
     if ! right_gateway "$IPADDR"; then
         error "$BRIDGE already have IP address not from the list"
     fi
-    log "IP-address already set, use it"
+    log "IP-address $IPADDR already set, use it"
 
 fi
 
