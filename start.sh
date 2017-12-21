@@ -29,20 +29,20 @@ EOF
 }
 
 error() {
-    >&2 echo -en "[$(date '+%Y-%m-%d %H:%M:%S')]\tERROR:\t"
+    >&2 echo -en "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR:\t"
     >&2 echo "$1"
     >&2 usage
     exit 1
 }
 
 log() {
-    echo -en "[$(date '+%Y-%m-%d %H:%M:%S')]\tINFO:\t"
+    echo -en "[$(date '+%Y-%m-%d %H:%M:%S')] INFO:\t"
     echo "$1"
 }
 
 debug() {
     if [ "$DEBUG" == 1 ]; then
-        echo -en "[$(date '+%Y-%m-%d %H:%M:%S')]\tDEBUG:\t"
+        echo -en "[$(date '+%Y-%m-%d %H:%M:%S')] DEBUG:\t"
         echo "$1"
     fi
 }
