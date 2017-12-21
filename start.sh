@@ -29,9 +29,17 @@ EOF
 }
 
 error() {
-    >&2 echo "error: $1"
+    >&2 echo "ERROR: $1"
     >&2 usage
     exit 1
+}
+
+log() {
+    echo "LOG: $1"
+}
+
+debug() {
+    [ "$DEBUG" == 1 ] && echo "DEBUG: $1"
 }
 
 next_ip() {
@@ -77,38 +85,59 @@ right_gateway() {
 # Configure bridge
 # ------------------------------------------------------------------------------------
 
+log "Starting bridge configuration"
 [ -z "$BRIDGE" ] && error "BRIDGE variable is not defined"
 
 # Check if bridge interface exist
 if ! ip link show "$BRIDGE" &> /dev/null; then
+
+    log "Adding new bridge $BRIDGE"
     ip link add dev "$BRIDGE" type bridge
     export FORCE_VLAN_CONFIG=1
+
+else
+
+    log "Bridge $BRIDGE already exist, use it"
+
 fi
 
+log "Setting bridge $BRIDGE up"
 ip link set "$BRIDGE" up
 
 # ------------------------------------------------------------------------------------
 # Configure vlan
 # ------------------------------------------------------------------------------------
+
 if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$FORCE_VLAN_CONFIG" == 1 ]; then
+
+    log "Starting VLAN configuration"
     [ -z "$VLAN" ] && error "VLAN variable is not defined"
     [ -z "$IFACE" ] && error "IFACE variable is not defined"
 
     # check if vlan interface exist
     if ip link show "$IFACE.$VLAN" &> /dev/null; then
 
+        log "VLAN interface $IFACE.$VLAN already exist"
+
         # check vlan interface for master
         MASTERIF="$(ip -o link show "$IFACE.$VLAN" | grep -o 'master [^ ]\+' | cut -d' ' -f2)"
         case "$MASTERIF" in
-            "$BRIDGE" ) : ;;
-            ""        ) ip link set "$IFACE.$VLAN" master "$BRIDGE" ;;
+            "$BRIDGE" ) log "$IFACE.$VLAN already member of $BRIDGE" ;;
+            ""        ) log "Adding $IFACE.$VLAN as member to $BRIDGE"
+                        ip link set "$IFACE.$VLAN" master "$BRIDGE" ;;
             *         ) error "interface $IFACE.$VLAN have another master" ;;
         esac
     else
-        # create vlan interface
+
+        log "Adding new VLAN interface $IFACE.$VLAN"
         ip link add link "$IFACE" name "$IFACE.$VLAN" type vlan id "$VLAN"
+
+        log "Adding $IFACE.$VLAN member to $BRIDGE"
         ip link set dev "$IFACE.$VLAN" master "$BRIDGE"
+
     fi
+
+    log "Setting vlan $IFACE.$VLAN up"
     ip link set dev "$IFACE.$VLAN" up
 fi
 
@@ -116,15 +145,25 @@ fi
 # Retrive network parameters
 # ------------------------------------------------------------------------------------
 
+log "Starting retriving parameters"
+
 POD_NETWORK="${POD_NETWORK:-10.244.0.0/16}"
 DIVISION_PREFIX="${DIVISION_PREFIX:-24}"
+
+log "POD_NETWORK=$POD_NETWORK"
+log "DIVISION_PREFIX=$DIVISION_PREFIX"
 
 export "POD_$(ipcalc -p "$POD_NETWORK")" # POD_PREFIX
 export "POD_$(ipcalc -b "$POD_NETWORK")" # POD_BROADCAST
 export "POD_$(ipcalc -n "$POD_NETWORK")" # POD_NETWORK
-
 export "FIRST_$(ipcalc -n "$POD_NETWORK/$DIVISION_PREFIX" )" # FIRST_NETWORK
 export "LAST_$(ipcalc -n "$POD_BROADCAST/$DIVISION_PREFIX" )" # LAST_NETWORK
+
+debug "POD_PREFIX=$POD_PREFIX"
+debug "POD_BROADCAST=$POD_BROADCAST"
+debug "POD_NETWORK=$POD_NETWORK"
+debug "FIRST_NETWORK=$FIRST_NETWORK"
+debug "LAST_NETWORK=$LAST_NETWORK"
 
 NETWORKS_LIST="$(
     CUR_NETWORK="$LAST_NETWORK"
@@ -134,31 +173,53 @@ NETWORKS_LIST="$(
     done
 )"
 
+debug "NETWORKS_LIST=\"$NETWORKS_LIST\""
+
 # ------------------------------------------------------------------------------------
 # Configure IP-address
 # ------------------------------------------------------------------------------------
+
+log "Starting configuring IP-address"
 
 # Check ip address
 IPADDR="$(ip -f inet -o addr show "$BRIDGE" | grep -o 'inet [^ /]*' | cut -d' ' -f2)"
 
 # If ip not exist 
 if [ -z "$IPADDR" ]; then
+
+    log "Retrieving IP-address"
     IPADDR="$(unused_gateway)"
+    log "Successful retrived $IPADDR"
+
+    log "Configuring $IPADDR/$POD_PREFIX on $BRIDGE"
     ip addr change "$IPADDR/$POD_PREFIX" dev "$BRIDGE"
+
 else
+
     if ! right_gateway "$IPADDR"; then
         error "$BRIDGE already have IP address not from the list"
     fi
+    log "IP-address already set, use it"
+
 fi
 
 # ------------------------------------------------------------------------------------
 # Configure cni
 # ------------------------------------------------------------------------------------
 
+log "Starting generating CNI configuration"
+
 GATEWAY="$IPADDR"
 SUBNET="${POD_NETWORK}/${POD_PREFIX}"
 FIRST_IP="$(next_ip "${GATEWAY}")"
 LAST_IP="$(prev_ip "$(ipcalc -b "${GATEWAY}/${DIVISION_PREFIX}" | cut -d= -f2)")"
+
+debug "GATEWAY=$GATEWAY"
+debug "SUBNET=$SUBNET"
+debug "FIRST_IP=$FIRST_IP"
+debug "LAST_IP=$LAST_IP"
+
+log "Writing $CNI_CONFIG"
 
 cat > $CNI_CONFIG <<EOT
 {
@@ -179,6 +240,7 @@ cat > $CNI_CONFIG <<EOT
         }
 }
 EOT
+debug "$(cat "$CNI_CONFIG")"
 
 # ------------------------------------------------------------------------------------
 # Sleep gently
