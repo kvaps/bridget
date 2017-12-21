@@ -70,8 +70,7 @@ unused_gateway() {
     echo "$UNUSED_GATEWAY"
 }
 right_gateway() {
-    local IFS=
-    echo "$NETWORKS_LIST" | grep -q "$1"
+    (IFS= echo "$NETWORKS_LIST") | grep -q "$(prev_ip $1)"
 }
 
 # ------------------------------------------------------------------------------------
