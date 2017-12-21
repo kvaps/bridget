@@ -29,17 +29,22 @@ EOF
 }
 
 error() {
-    >&2 echo "ERROR: $1"
+    >&2 echo -en "[$(date '+%Y-%m-%d %H:%M:%S')]\tERROR:\t"
+    >&2 echo "$1"
     >&2 usage
     exit 1
 }
 
 log() {
-    echo "LOG: $1"
+    echo -en "[$(date '+%Y-%m-%d %H:%M:%S')]\tINFO:\t"
+    echo "$1"
 }
 
 debug() {
-    [ "$DEBUG" == 1 ] && echo "DEBUG: $1"
+    if [ "$DEBUG" == 1 ]; then
+        echo -en "[$(date '+%Y-%m-%d %H:%M:%S')]\tDEBUG:\t"
+        echo "$1"
+    fi
 }
 
 next_ip() {
