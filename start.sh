@@ -1,6 +1,6 @@
 #!/bin/sh
 
-CNI_CONFIG="${CNI_CONFIG:-/etc/cni/net.d/10-br-dhcp.conf}"
+CNI_CONFIG="${CNI_CONFIG:-/etc/cni/net.d/10-bridged.conf}"
 
 usage() {
 cat <<EOF
@@ -21,7 +21,7 @@ Short workflow:
 * If VLAN and IFACE is set, the next chain will be created:
     IFACE <-- VLAN <-- BRIDGE
 
-* If bridge have no IP-address it will be retrived from the DHCP.
+* If bridge have no IP-address it will be retrived automatically
   This IP-address will be used as default gateway for containers
   for make possible kubernetes-services.
 
@@ -236,7 +236,7 @@ log "Writing $CNI_CONFIG"
 
 cat > $CNI_CONFIG <<EOT
 {
-        "name": "container",
+        "name": "bridged",
         "type": "bridge",
         "bridge": "${BRIDGE}",
         "ipMasq": true,
