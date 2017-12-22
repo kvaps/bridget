@@ -146,13 +146,17 @@ if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$CHECK_SLAVES" == 1 ]; then
         SLAVEIF="$IFACE"
     fi
 
+    if ! ip link show "$SLAVEIF" &> /dev/null; then
+        error "$SLAVEIF does not exist"
+    fi
+
     # check if slave interface contains right master
-    MASTERIF="$(ip -o link show "$IFACE.$VLAN" | grep -o -m1 'master [^ ]\+' | cut -d' ' -f2)"
+    MASTERIF="$(ip -o link show "$SLAVEIF" | grep -o -m1 'master [^ ]\+' | cut -d' ' -f2 )"
 
     case "$MASTERIF" in
         "$BRIDGE" ) log "$SLAVEIF already member of $BRIDGE" ;;
         ""        ) log "Adding $SLAVEIF as member to $BRIDGE"
-                    ip link set "$SLAVEIF" master "$BRIDGE" || exit 1 ;;
+                    ip link set "$SLAVEIF" master "$BRIDGE" ;;
         *         ) error "interface $SLAVEIF have another master" ;;
     esac
 fi
