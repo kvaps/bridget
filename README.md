@@ -52,3 +52,20 @@ Please make sure that you have no any IP-address on bridge, because will be conf
 ```
 kubectl create -f bridget.yaml
 ```
+
+## Contact
+
+* Author: [kvaps](mailto:kvapss@gmail.com)
+* Bugs: [issues](https://github.com/kvaps/bridget/issues)
+
+## Contributing
+
+To contribute bug patches or new features, you can use the github Pull Request model. It is assumed that code and documentation are contributed under the Apache License 2.0. 
+
+## Reporting bugs
+
+Please use github issue-tracker for submit bugs
+
+## License
+
+bridget is under the Apache 2.0 license. See the [LICENSE](LICENSE) file for details.
