@@ -142,7 +142,7 @@ if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$CHECK_SLAVES" == 1 ]; then
 
     if [ ! -z "$VLAN" ]; then
         SLAVEIF="$IFACE.$VLAN"
-    elif [ ! -z "$VLAN" ]; then
+    else
         SLAVEIF="$IFACE"
     fi
 
