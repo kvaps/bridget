@@ -52,6 +52,16 @@ Please make sure that you have no any IP-address on the bridge, because it will 
 kubectl create -f bridget.yaml
 ```
 
+## Update
+
+* Check your `bridget.yaml` for changes.
+
+* Run:
+```
+kubectl delete -f bridget.yaml
+kubectl create -f bridget.yaml
+```
+
 ## Alternatives
 
 There is not much alternatives for kubernetes if you want to use flat L2-network.
