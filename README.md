@@ -19,6 +19,8 @@ bridget automatically retrieves IP-addresses from your pod-network, and configur
 
 ## Parameters
 
+All parameters passing as environment variables:
+
  - **BRIDGE** *(example: `cbr0`)* - Bridge name. Mandatory option.
  - **VLAN** *(example: `100`)* - VLAN id. If set, the new vlan-interface under IFACE will be created, then added to BRIDGE.
  - **IFACE** *(example: `eth0`)* - Physical interface for connect to bridge. Mandatory if VLAN is set, but can be used singly.
@@ -27,3 +29,21 @@ bridget automatically retrieves IP-addresses from your pod-network, and configur
  - **POD_NETWORK** *(default: `10.244.0.0/16`)* - Your pod network.
  - **DIVISION_PREFIX** *(default: `24`)* - Network CIDR prefix for devide your POD_NETWORK.
  - **DEBUG** *(example: `1`)* - Enable verbose output.
+
+## Quick start
+
+* Instantiate your kubernetes with `--pod-network-cidr=10.244.0.0/16`
+
+* Download yaml file
+```
+curl -o https://raw.githubusercontent.com/kvaps/bridget/master/bridget.yaml
+```
+
+* Edit wanted parameters. By default bridget uses `cbr0` bridge that nowhere connected, so you need to set IFACE and VLAN parameters.
+Or make sure that your bridge is already configured for use some physical interface.
+Please make sure that you have no any IP-address on bridge, because will be configured automatcally.
+
+* Run daemonset:
+```
+kubectl create -f bridget.yaml
+```
