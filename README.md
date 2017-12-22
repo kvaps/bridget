@@ -32,14 +32,19 @@ All parameters passing as environment variables:
 
 ## Quick start
 
-* Instantiate your kubernetes with `--pod-network-cidr=10.244.0.0/16`
+* Instantiate your kubernetes with `--pod-network-cidr=10.244.0.0/16` flag.
 
-* Download yaml file
+* Download yaml file:
 ```
 curl -o https://raw.githubusercontent.com/kvaps/bridget/master/bridget.yaml
 ```
 
-* Edit wanted parameters. By default bridget uses `cbr0` bridge that nowhere connected, so you need to set IFACE and VLAN parameters.
+* Edit wanted parameters:
+```
+vim bridget.yaml
+```
+
+By default bridget uses `cbr0` bridge that nowhere connected, so you need to set IFACE and VLAN parameters.
 Or make sure that your bridge is already configured for use some physical interface.
 Please make sure that you have no any IP-address on bridge, because will be configured automatcally.
 
