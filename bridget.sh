@@ -13,6 +13,7 @@ cat <<EOF
     - CHECK_SLAVES (example: 1)
     - POD_NETWORK (default: 10.244.0.0/16)
     - DIVISION_PREFIX (default: 24)"
+    - ARP_PACKETS (default: 4)
     - DEBUG (example: 1)
 
 Short workflow:
@@ -72,21 +73,53 @@ random_gateway() {
     echo "$RANDOM_GATEWAY"
 }
 
+address_is_free(){
+
+    set +m
+
+    ARP_PACKETS=${ARP_PACKETS:-4}
+
+    # Start recording packets
+    tcpdump -nn -i "$BRIDGE" arp host "$1" 1>/dev/null 2>/tmp/tcpdump.out &
+    
+    # Wait for tcpdump
+    until [ -f /tmp/tcpdump.out ]; do sleep 0.1; done
+
+    # Start arping
+    local ARPING_CHECK="$(arping -fD -I "$BRIDGE" -s 0.0.0.0 -c 4 "$1" | awk '$1=="Sent" {printf $2 " "} $1=="Received" {print $2}')"
+
+    # Kill tcpdump
+    kill "$!" && wait "$!"
+
+    local TCPDUMP_COUNT="$(awk '$3 == "received" {print $1}' /tmp/tcpdump.out; rm -f /tmp/tcpdump.out)"
+    local ARPING_COUNT="$(echo "$ARPING_CHECK" | awk '{print $1+$2}')"
+    local ARPING_SEND="$(echo "$ARPING_CHECK" | awk '{print $1}')"
+    local ARPING_RECEIVED="$(echo "$ARPING_CHECK" | awk '{print $2}')"
+
+    if [ "$ARPING_RECEIVED" == "0" ] && [ "$TCPDUMP_COUNT" == "$ARPING_COUNT" ]; then
+        return 0
+    else
+        return 1
+    fi
+
+}
+
 unused_gateway() {
     if [ -f "$CNI_CONFIG" ]; then
         local UNUSED_GATEWAY=$(sed -n 's/.*"gateway": "\(.*\)",/\1/p' "$CNI_CONFIG")
         rm -f "$CNI_CONFIG"
     fi
-    if [ -z $UNUSED_GATEWAY ] || ! right_gateway "$UNUSED_GATEWAY"; then
+    if [ -z $UNUSED_GATEWAY ] || ! gateway_is_right "$UNUSED_GATEWAY"; then
         UNUSED_GATEWAY="$(random_gateway)"
     fi
 
-    while (arping -fD -I "$BRIDGE" -s 0.0.0.0 -c "$(( ( RANDOM % 8 ) + 2 ))" "$UNUSED_GATEWAY" | grep -q 'reply from'); do
+    while ! address_is_free "$UNUSED_GATEWAY"; do
         local UNUSED_GATEWAY="$(random_gateway)"
     done
     echo "$UNUSED_GATEWAY"
 }
-right_gateway() {
+
+gateway_is_right() {
     (IFS= echo "$NETWORKS_LIST") | grep -q "$(prev_ip $1)"
 }
 
@@ -223,7 +256,7 @@ if [ -z "$IPADDR" ]; then
 
 else
 
-    if ! right_gateway "$IPADDR"; then
+    if ! gateway_is_right "$IPADDR"; then
         error "$BRIDGE already have IP address not from the list"
     fi
     log "IP-address $IPADDR already set, use it"
