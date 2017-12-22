@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="280"
+   height="100"
+   viewBox="0 0 74.083332 26.458336"
+   version="1.1"
+   id="svg8"
+   sodipodi:docname="logo.svg"
+   inkscape:version="0.92.2 5c3e80d, 2017-08-06">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1"
+     inkscape:cx="178.06766"
+     inkscape:cy="-6.1390475"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:window-width="1596"
+     inkscape:window-height="876"
+     inkscape:window-x="0"
+     inkscape:window-y="200"
+     inkscape:window-maximized="1"
+     units="px" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-270.54165)">
+    <path
+       style="fill:#00969a;fill-opacity:1;stroke:none;stroke-width:0.5446257;stroke-miterlimit:4;stroke-dasharray:none"
+       d="M 35.791801,272.79303 A 41.470934,35.557344 0 0 0 0.9270951,295.5648 H 35.791801 Z"
+       id="path4510"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:#005a6c;fill-opacity:1;stroke:none;stroke-width:0.5446257;stroke-miterlimit:4;stroke-dasharray:none"
+       d="m 39.64738,272.62469 a 41.470942,35.557344 0 0 0 -20.78528,4.85415 25.136943,29.197073 0 0 1 5.534933,-0.75035 25.136943,29.197073 0 0 1 18.822157,9.91872 H 72.509953 A 41.470942,35.557344 0 0 0 39.64738,272.62469 Z"
+       id="path4510-5"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.42380047px;line-height:1.25;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;fill:#005a6c;fill-opacity:1;stroke:none;stroke-width:0.21059506"
+       x="41.957264"
+       y="296.78262"
+       id="text4519"
+       transform="scale(1.0073382,0.99271525)"><tspan
+         sodipodi:role="line"
+         id="tspan4517"
+         x="41.957264"
+         y="296.78262"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';fill:#005a6c;fill-opacity:1;stroke-width:0.21059506">bridget</tspan></text>
+  </g>
+</svg>
