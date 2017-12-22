@@ -27,7 +27,7 @@ spec:
         #  value: "bond0"
         #- name: MTU
         #  value: "1500"
-        #- name: FORCE_VLAN_CONFIG
+        #- name: CONFIGURE_SLAVES
         #  value: "1"
         #- name: POD_NETWORK
         #  value: "10.244.0.0/16"

@@ -10,7 +10,7 @@ cat <<EOF
     - VLAN (example: 100)
     - IFACE (example: eth0)
     - MTU (default: 1500)
-    - FORCE_VLAN_CONFIG (example: 1)
+    - CONFIGURE_SLAVES (example: 1)
     - POD_NETWORK (default: 10.244.0.0/16)
     - DIVISION_PREFIX (default: 24)"
 
@@ -98,7 +98,7 @@ if ! ip link show "$BRIDGE" &> /dev/null; then
 
     log "Adding new bridge $BRIDGE"
     ip link add dev "$BRIDGE" type bridge
-    export FORCE_VLAN_CONFIG=1
+    export CONFIGURE_SLAVES=1
 
 else
 
@@ -113,37 +113,47 @@ ip link set "$BRIDGE" up
 # Configure vlan
 # ------------------------------------------------------------------------------------
 
-if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$FORCE_VLAN_CONFIG" == 1 ]; then
+if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$CONFIGURE_SLAVES" == 1 ]; then
 
     log "Starting VLAN configuration"
-    [ -z "$VLAN" ] && error "VLAN variable is not defined"
     [ -z "$IFACE" ] && error "IFACE variable is not defined"
 
-    # check if vlan interface exist
-    if ip link show "$IFACE.$VLAN" &> /dev/null; then
+    if [ ! -z "$VLAN" ]; then
+        # check if vlan interface exist
+        if ip link show "$IFACE.$VLAN" &> /dev/null; then
+            log "VLAN interface $IFACE.$VLAN already exist"
+        else
+            log "Adding new VLAN interface $IFACE.$VLAN"
+            ip link add link "$IFACE" name "$IFACE.$VLAN" type vlan id "$VLAN"
+        fi
+        log "Setting vlan $IFACE.$VLAN up"
+        ip link set dev "$IFACE.$VLAN" up
+    fi
+fi
 
-        log "VLAN interface $IFACE.$VLAN already exist"
+# ------------------------------------------------------------------------------------
+# Configure slaves
+# ------------------------------------------------------------------------------------
 
-        # check vlan interface for master
-        MASTERIF="$(ip -o link show "$IFACE.$VLAN" | grep -o -m1 'master [^ ]\+' | cut -d' ' -f2)"
-        case "$MASTERIF" in
-            "$BRIDGE" ) log "$IFACE.$VLAN already member of $BRIDGE" ;;
-            ""        ) log "Adding $IFACE.$VLAN as member to $BRIDGE"
-                        ip link set "$IFACE.$VLAN" master "$BRIDGE" ;;
-            *         ) error "interface $IFACE.$VLAN have another master" ;;
-        esac
-    else
+if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$CONFIGURE_SLAVES" == 1 ]; then
 
-        log "Adding new VLAN interface $IFACE.$VLAN"
-        ip link add link "$IFACE" name "$IFACE.$VLAN" type vlan id "$VLAN"
+    log "Starting configuring slave interfaces"
 
-        log "Adding $IFACE.$VLAN member to $BRIDGE"
-        ip link set dev "$IFACE.$VLAN" master "$BRIDGE"
-
+    if [ ! -z "$VLAN" ]; then
+        SLAVEIF="$IFACE.$VLAN"
+    elif [ ! -z "$VLAN" ]; then
+        SLAVEIF="$IFACE"
     fi
 
-    log "Setting vlan $IFACE.$VLAN up"
-    ip link set dev "$IFACE.$VLAN" up
+    # check if slave interface contains right master
+    MASTERIF="$(ip -o link show "$IFACE.$VLAN" | grep -o -m1 'master [^ ]\+' | cut -d' ' -f2)"
+
+    case "$MASTERIF" in
+        "$BRIDGE" ) log "$SLAVEIF already member of $BRIDGE" ;;
+        ""        ) log "Adding $SLAVEIF as member to $BRIDGE"
+                    ip link set "$SLAVEIF" master "$BRIDGE" ;;
+        *         ) error "interface $SLAVEIF have another master" ;;
+    esac
 fi
 
 # ------------------------------------------------------------------------------------
