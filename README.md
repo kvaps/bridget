@@ -36,7 +36,7 @@ All parameters passing as environment variables:
 
 * Download yaml file:
 ```
-curl -o https://raw.githubusercontent.com/kvaps/bridget/master/bridget.yaml
+curl -O https://raw.githubusercontent.com/kvaps/bridget/master/bridget.yaml
 ```
 
 * Edit wanted parameters:
