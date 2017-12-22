@@ -73,7 +73,10 @@ random_gateway() {
 }
 
 unused_gateway() {
-    [ -f "$CNI_CONFIG" ] && local UNUSED_GATEWAY=$(sed -n 's/.*"gateway": "\(.*\)",/\1/p' "$CNI_CONFIG")
+    if [ -f "$CNI_CONFIG" ]; then
+        local UNUSED_GATEWAY=$(sed -n 's/.*"gateway": "\(.*\)",/\1/p' "$CNI_CONFIG")
+        rm -f "$CNI_CONFIG"
+    fi
     if [ -z $UNUSED_GATEWAY ] || ! right_gateway "$UNUSED_GATEWAY"; then
         UNUSED_GATEWAY="$(random_gateway)"
     fi
