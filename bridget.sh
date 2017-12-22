@@ -81,7 +81,7 @@ unused_gateway() {
         UNUSED_GATEWAY="$(random_gateway)"
     fi
 
-    while arping -fD -I "$BRIDGE" -s 0.0.0.0 -c "$(( ( RANDOM % 8 ) + 2 ))" "$UNUSED_GATEWAY" 1>/dev/null; do
+    while (arping -fD -I "$BRIDGE" -s 0.0.0.0 -c "$(( ( RANDOM % 8 ) + 2 ))" "$UNUSED_GATEWAY" | grep -q 'reply from'); do
         local UNUSED_GATEWAY="$(random_gateway)"
     done
     echo "$UNUSED_GATEWAY"
