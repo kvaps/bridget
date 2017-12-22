@@ -99,7 +99,7 @@ if ! ip link show "$BRIDGE" &> /dev/null; then
 
     log "Adding new bridge $BRIDGE"
     ip link add dev "$BRIDGE" type bridge
-    export CONFIGURE_SLAVES=1
+    export CHECK_SLAVES=1
 
 else
 
@@ -114,7 +114,7 @@ ip link set "$BRIDGE" up
 # Configure vlan
 # ------------------------------------------------------------------------------------
 
-if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$CONFIGURE_SLAVES" == 1 ]; then
+if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$CHECK_SLAVES" == 1 ]; then
 
     log "Starting VLAN configuration"
     [ -z "$IFACE" ] && error "IFACE variable is not defined"
@@ -136,7 +136,7 @@ fi
 # Configure slaves
 # ------------------------------------------------------------------------------------
 
-if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$CONFIGURE_SLAVES" == 1 ]; then
+if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$CHECK_SLAVES" == 1 ]; then
 
     log "Starting configuring slave interfaces"
 
