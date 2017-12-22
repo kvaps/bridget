@@ -1,13 +1,13 @@
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
-  name: bridged
+  name: bridget
   namespace: kube-system
 spec:
   template:
     metadata:
       labels:
-        app: bridged
+        app: bridget
     spec:
       tolerations:
       - key: node-role.kubernetes.io/master
@@ -16,8 +16,8 @@ spec:
       hostNetwork: true
       hostPID: true
       containers:
-      - name: bridged
-        image: kvaps/bridged
+      - name: bridget
+        image: kvaps/bridget
         env:
         - name: BRIDGE
           value: "cbr0"
@@ -27,12 +27,14 @@ spec:
         #  value: "bond0"
         #- name: MTU
         #  value: "1500"
-        #- name: CONFIGURE_SLAVES
+        #- name: CHECK_SLAVES
         #  value: "1"
         #- name: POD_NETWORK
         #  value: "10.244.0.0/16"
         #- name: DIVISION_PREFIX
         #  value: "24"
+        #- name: DEBUG
+        #  value: "1"
         securityContext:
           capabilities:
             add:
