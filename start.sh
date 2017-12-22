@@ -1,6 +1,6 @@
 #!/bin/sh
 
-CNI_CONFIG="${CNI_CONFIG:-/etc/cni/net.d/10-bridged.conf}"
+CNI_CONFIG="${CNI_CONFIG:-/etc/cni/net.d/10-bridget.conf}"
 
 usage() {
 cat <<EOF
@@ -10,9 +10,10 @@ cat <<EOF
     - VLAN (example: 100)
     - IFACE (example: eth0)
     - MTU (default: 1500)
-    - CONFIGURE_SLAVES (example: 1)
+    - CHECK_SLAVES (example: 1)
     - POD_NETWORK (default: 10.244.0.0/16)
     - DIVISION_PREFIX (default: 24)"
+    - DEBUG (example: 1)
 
 Short workflow:
 
@@ -151,7 +152,7 @@ if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$CONFIGURE_SLAVES" == 1 ]; then
     case "$MASTERIF" in
         "$BRIDGE" ) log "$SLAVEIF already member of $BRIDGE" ;;
         ""        ) log "Adding $SLAVEIF as member to $BRIDGE"
-                    ip link set "$SLAVEIF" master "$BRIDGE" ;;
+                    ip link set "$SLAVEIF" master "$BRIDGE" || exit 1 ;;
         *         ) error "interface $SLAVEIF have another master" ;;
     esac
 fi
@@ -246,7 +247,7 @@ log "Writing $CNI_CONFIG"
 
 cat > $CNI_CONFIG <<EOT
 {
-        "name": "bridged",
+        "name": "bridget",
         "type": "bridge",
         "bridge": "${BRIDGE}",
         "ipMasq": true,
