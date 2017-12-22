@@ -53,6 +53,20 @@ Please make sure that you have no any IP-address on bridge, because will be conf
 kubectl create -f bridget.yaml
 ```
 
+## Alternatives
+
+There is not much alternatives for kubernetes if you want to use flat L2-network.
+
+As a rule, if such solutions are provided, like L2-modes for [flannel](https://github.com/coreos/flannel) or [romana](https://github.com/romana/romana), it's still use difficult rules for nating and routing. Thanks to that you have flexible policies and some other things, but lose simplicity and productivity of simple L2-network.
+
+Bridget was created under [pipework](https://github.com/jpetazzo/pipework)'s inspiration.
+pipework allows you to add single interfaces into your containers, but you need to do extra actions for achieve this.
+Besides Kubernetes knows nothing about any changes from this side.
+
+Unlike pipework bridget uses [CNI](https://github.com/containernetworking/cni) for configuring pod interfaces, as a result all configuration occurs automatically, and kubernetes gets right IP-addresses.
+
+As alternative you can also consider сreate your own CNI configuration with [bridge](https://github.com/containernetworking/plugins/tree/master/plugins/main/bridge) or [macvlan](https://github.com/containernetworking/plugins/tree/master/plugins/main/macvlan) plugin for each your host.
+
 ## Contact
 
 * Author: [kvaps](mailto:kvapss@gmail.com)
