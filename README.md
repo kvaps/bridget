@@ -36,7 +36,7 @@ All parameters passing as environment variables:
 
 * Download yaml file:
 ```
-curl -o https://raw.githubusercontent.com/kvaps/bridget/master/bridget.yaml
+curl -O https://raw.githubusercontent.com/kvaps/bridget/master/bridget.yaml
 ```
 
 * Edit wanted parameters:
@@ -44,9 +44,8 @@ curl -o https://raw.githubusercontent.com/kvaps/bridget/master/bridget.yaml
 vim bridget.yaml
 ```
 
-By default bridget uses `cbr0` bridge that nowhere connected, so you need to set IFACE and VLAN parameters.
-Or make sure that your bridge is already configured for use some physical interface.
-Please make sure that you have no any IP-address on bridge, because will be configured automatcally.
+By default bridget uses `cbr0` bridge that nowhere connected, so you need to set IFACE and VLAN parameters, or configure your host system for connect physical interface this bridge byself.
+Please make sure that you have no any IP-address on the bridge, because it will be configured automatcally.
 
 * Run daemonset:
 ```
