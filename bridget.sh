@@ -89,7 +89,7 @@ address_is_free(){
     fi
 
     # Wait for tcpdump
-    until [ -f /tmp/tcpdump.out ]; do sleep 0.1; done
+    until grep -q 'listening on' /tmp/tcpdump.out; do sleep 1; done
 
     # Start arping
     local ARPING_CHECK="$(arping -fD -I "$BRIDGE" -s 0.0.0.0 -c 4 "$1" | awk '$1=="Sent" {printf $2 " "} $1=="Received" {print $2}')"
@@ -111,7 +111,7 @@ address_is_free(){
         debug "[ ARPING_RECEIVED == 0 ] && [ TCPDUMP_COUNT == ARPING_COUNT ]"
         return 0
     else
-        debug "[ ARPING_RECEIVED != 0 ] && [ TCPDUMP_COUNT != ARPING_COUNT ]"
+        debug "[ ARPING_RECEIVED != 0 ] || [ TCPDUMP_COUNT != ARPING_COUNT ]"
         return 1
     fi
 
