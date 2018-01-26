@@ -314,7 +314,9 @@ cat > $CNI_CONFIG <<EOT
         }
 }
 EOT
-debug "$(cat "$CNI_CONFIG")"
+
+# Display config
+cat "$CNI_CONFIG"
 
 # ------------------------------------------------------------------------------------
 # Sleep gently
