@@ -83,9 +83,9 @@ address_is_free(){
 
     # Start recording packets
     if [ "$DEBUG" == 1 ]; then
-        tcpdump -nn -i "$BRIDGE" arp host "$1" 2>/tmp/tcpdump.out 1>&2 &
+        tcpdump -nn -i "$BRIDGE" arp host "$1" 1>&2 2>/tmp/tcpdump.out &
     else
-        tcpdump -nn -i "$BRIDGE" arp host "$1" 2>/tmp/tcpdump.out 1>/dev/null &
+        tcpdump -nn -i "$BRIDGE" arp host "$1" 1>/dev/null 2>/tmp/tcpdump.out &
     fi
 
     # Wait for tcpdump
@@ -97,7 +97,7 @@ address_is_free(){
     # Kill tcpdump
     kill "$!" && wait "$!"
 
-    local TCPDUMP_COUNT="$(awk '$3 == "received" {print $1}' /tmp/tcpdump.out; rm -f /tmp/tcpdump.out)"
+    local TCPDUMP_COUNT="$(cat /tmp/tcpdump.out | grep  -m1 "packets received by filter$" | awk '$3 == "received" {print $1}'; rm -f /tmp/tcpdump.out)"
     local ARPING_COUNT="$(echo "$ARPING_CHECK" | awk '{print $1+$2}')"
     local ARPING_SEND="$(echo "$ARPING_CHECK" | awk '{print $1}')"
     local ARPING_RECEIVED="$(echo "$ARPING_CHECK" | awk '{print $2}')"
