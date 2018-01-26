@@ -113,10 +113,6 @@ address_is_free(){
 
 }
 
-unused_gateway() {
-
-}
-
 gateway_is_right() {
     (IFS= echo "$NETWORKS_LIST") | grep -q "$(prev_ip $1)"
 }
