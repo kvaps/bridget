@@ -91,7 +91,7 @@ address_is_free(){
     # Kill tcpdump
     kill "$!" && wait "$!"
 
-    local TCPDUMP_COUNT="$(awk '$3 == "received" {print $1}' /tmp/tcpdump.out)"
+    local TCPDUMP_COUNT="$(awk '$3 == "received" {print $1}' /tmp/tcpdump.out; rm -f /tmp/tcpdump.out)"
     local ARPING_COUNT="$(echo "$ARPING_CHECK" | awk '{print $1+$2}')"
     local ARPING_SEND="$(echo "$ARPING_CHECK" | awk '{print $1}')"
     local ARPING_RECEIVED="$(echo "$ARPING_CHECK" | awk '{print $2}')"
@@ -100,8 +100,6 @@ address_is_free(){
     debug "ARPING_COUNT=$ARPING_COUNT"
     debug "ARPING_SEND=$ARPING_SEND"
     debug "ARPING_RECEIVED=$ARPING_RECEIVED"
-    debug "$(cat /tmp/tcpdump.out)"
-    rm -f /tmp/tcpdump.out
 
     if [ "$ARPING_RECEIVED" == "0" ] && [ "$TCPDUMP_COUNT" == "$ARPING_COUNT" ]; then
         debug "[ ARPING_RECEIVED == 0 ] && [ TCPDUMP_COUNT == ARPING_COUNT ]"
@@ -226,8 +224,6 @@ NETWORKS_LIST="$(
         export CUR_"$(ipcalc -n "$(prev_ip "$CUR_NETWORK")/$DIVISION_PREFIX")"
     done
 )"
-
-debug "NETWORKS_LIST=\"$(echo "$NETWORKS_LIST" | tr '\n' ' ' )\""
 
 # ------------------------------------------------------------------------------------
 # Configure IP-address
