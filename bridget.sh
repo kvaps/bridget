@@ -44,8 +44,8 @@ log() {
 
 debug() {
     if [ "$DEBUG" == 1 ]; then
-        echo -en "[$(date '+%Y-%m-%d %H:%M:%S')] DEBUG:\t"
-        echo "$1"
+        >&2 echo -en "[$(date '+%Y-%m-%d %H:%M:%S')] DEBUG:\t"
+        >&2 echo "$1"
     fi
 }
 
@@ -80,10 +80,14 @@ address_is_free(){
     ARP_PACKETS=${ARP_PACKETS:-4}
 
     # Start recording packets
-    tcpdump -nn -i "$BRIDGE" arp host "$1" 1>/dev/null 2>/tmp/tcpdump.out &
-    
+    if [ "$DEBUG" == 1 ]; then
+        tcpdump -nn -i "$BRIDGE" arp host "$1" 1>&2 2>/tmp/tcpdump.out &
+    else
+        tcpdump -nn -i "$BRIDGE" arp host "$1" 1>/dev/null 2>/tmp/tcpdump.out &
+    fi
+
     # Wait for tcpdump
-    until [ -f /tmp/tcpdump.out ]; do sleep 0.1; done
+    until grep -q 'listening on' /tmp/tcpdump.out; do sleep 1; done
 
     # Start arping
     local ARPING_CHECK="$(arping -fD -I "$BRIDGE" -s 0.0.0.0 -c 4 "$1" | awk '$1=="Sent" {printf $2 " "} $1=="Received" {print $2}')"
@@ -91,32 +95,24 @@ address_is_free(){
     # Kill tcpdump
     kill "$!" && wait "$!"
 
-    local TCPDUMP_COUNT="$(awk '$3 == "received" {print $1}' /tmp/tcpdump.out; rm -f /tmp/tcpdump.out)"
+    local TCPDUMP_COUNT="$(cat /tmp/tcpdump.out | grep  -m1 "packets captured$" | awk '{print $1}'; rm -f /tmp/tcpdump.out)"
     local ARPING_COUNT="$(echo "$ARPING_CHECK" | awk '{print $1+$2}')"
     local ARPING_SEND="$(echo "$ARPING_CHECK" | awk '{print $1}')"
     local ARPING_RECEIVED="$(echo "$ARPING_CHECK" | awk '{print $2}')"
 
+    debug "TCPDUMP_COUNT=$TCPDUMP_COUNT"
+    debug "ARPING_COUNT=$ARPING_COUNT"
+    debug "ARPING_SEND=$ARPING_SEND"
+    debug "ARPING_RECEIVED=$ARPING_RECEIVED"
+
     if [ "$ARPING_RECEIVED" == "0" ] && [ "$TCPDUMP_COUNT" == "$ARPING_COUNT" ]; then
+        debug "[ ARPING_RECEIVED == 0 ] && [ TCPDUMP_COUNT == ARPING_COUNT ]"
         return 0
     else
+        debug "[ ARPING_RECEIVED != 0 ] || [ TCPDUMP_COUNT != ARPING_COUNT ]"
         return 1
     fi
 
-}
-
-unused_gateway() {
-    if [ -f "$CNI_CONFIG" ]; then
-        local UNUSED_GATEWAY=$(sed -n 's/.*"gateway": "\(.*\)",/\1/p' "$CNI_CONFIG")
-        rm -f "$CNI_CONFIG"
-    fi
-    if [ -z $UNUSED_GATEWAY ] || ! gateway_is_right "$UNUSED_GATEWAY"; then
-        UNUSED_GATEWAY="$(random_gateway)"
-    fi
-
-    while ! address_is_free "$UNUSED_GATEWAY"; do
-        local UNUSED_GATEWAY="$(random_gateway)"
-    done
-    echo "$UNUSED_GATEWAY"
 }
 
 gateway_is_right() {
@@ -233,8 +229,6 @@ NETWORKS_LIST="$(
     done
 )"
 
-debug "NETWORKS_LIST=\"$(echo "$NETWORKS_LIST" | tr '\n' ' ' )\""
-
 # ------------------------------------------------------------------------------------
 # Configure IP-address
 # ------------------------------------------------------------------------------------
@@ -247,9 +241,25 @@ IPADDR="$(ip -f inet -o addr show "$BRIDGE" | grep -o -m1 'inet [^ /]*' | cut -d
 # If ip not exist 
 if [ -z "$IPADDR" ]; then
 
-    log "Retrieving IP-address"
-    IPADDR="$(unused_gateway)"
-    log "Successful retrived $IPADDR"
+    if [ -f "$CNI_CONFIG" ]; then
+        CHECKING_IP=$(sed -n 's/.*"gateway": "\(.*\)",/\1/p' "$CNI_CONFIG")
+        log "Cni config found, taking old address $CHECKING_IP"
+        rm -f "$CNI_CONFIG"
+    fi
+    if [ -z $CHECKING_IP ] || ! gateway_is_right "$CHECKING_IP"; then
+        CHECKING_IP="$(random_gateway)"
+        log "New address generated $CHECKING_IP"
+    fi
+
+    log "Checking $CHECKING_IP"
+    while ! address_is_free "$CHECKING_IP"; do
+        log "Address $CHECKING_IP is not free"
+        CHECKING_IP="$(random_gateway)"
+        log "Taking another one $CHECKING_IP"
+    done
+
+    log "Address $CHECKING_IP is free, using it as gateway"
+    IPADDR="$CHECKING_IP"
 
     log "Configuring $IPADDR/$POD_PREFIX on $BRIDGE"
     ip addr change "$IPADDR/$POD_PREFIX" dev "$BRIDGE"
@@ -304,9 +314,11 @@ cat > $CNI_CONFIG <<EOT
         }
 }
 EOT
-debug "$(cat "$CNI_CONFIG")"
+
+# Display config
+cat "$CNI_CONFIG"
 
 # ------------------------------------------------------------------------------------
 # Sleep gently
 # ------------------------------------------------------------------------------------
-tail -f /dev/null
+exec tail -f /dev/null
