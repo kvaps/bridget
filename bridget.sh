@@ -80,8 +80,14 @@ address_is_free(){
     ARP_PACKETS=${ARP_PACKETS:-4}
 
     # Start recording packets
-    tcpdump -nn -i "$BRIDGE" arp host "$1" 1>/dev/null 2>/tmp/tcpdump.out &
-    
+
+    # Start recording packets
+    if [ "$DEBUG" == 1 ]; then
+        tcpdump -nn -i "$BRIDGE" arp host "$1" 2>/tmp/tcpdump.out 1>&2 &
+    else
+        tcpdump -nn -i "$BRIDGE" arp host "$1" 2>/tmp/tcpdump.out 1>/dev/null &
+    fi
+
     # Wait for tcpdump
     until [ -f /tmp/tcpdump.out ]; do sleep 0.1; done
 
