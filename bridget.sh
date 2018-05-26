@@ -12,8 +12,6 @@ cat <<EOF
     - MTU (default: 1500)
     - CHECK_SLAVES (example: 1)
     - POD_NETWORK (default: 10.244.0.0/16)
-    - DIVISION_PREFIX (default: 24)"
-    - ARP_PACKETS (default: 4)
     - DEBUG (example: 1)
 
 Short workflow:
@@ -23,9 +21,9 @@ Short workflow:
 * If VLAN and IFACE is set, the next chain will be created:
     IFACE <-- VLAN <-- BRIDGE
 
-* If bridge have no IP-address it will be retrived automatically
-  This IP-address will be used as default gateway for containers
-  for make possible kubernetes-services.
+* IP-address will set automatically. This IP-address
+  will be used as default gateway for containers
+  for make possible kubernetes-services working.
 
 EOF
 }
@@ -63,60 +61,11 @@ prev_ip() {
     echo $PREV_IP
 }
 
-random_gateway() {
-    local IFS=
-    local NETWORKS_NUM="$(echo "$NETWORKS_LIST" | wc -l)"
-    local RANDOM_NETWORK_NUM="$(shuf -i "1-$NETWORKS_NUM" -n 1)"
-    local RANDOM_NETWORK="$(echo "$NETWORKS_LIST" | head -n "$RANDOM_NETWORK_NUM" | tail -n 1)"
-    unset IFS
-    local RANDOM_GATEWAY="$(next_ip $RANDOM_NETWORK)"
-    echo "$RANDOM_GATEWAY"
-}
-
-address_is_free(){
-
-    set +m
-
-    ARP_PACKETS=${ARP_PACKETS:-4}
-
-    # Start recording packets
-    if [ "$DEBUG" == 1 ]; then
-        tcpdump -nn -i "$BRIDGE" arp host "$1" 1>&2 2>/tmp/tcpdump.out &
-    else
-        tcpdump -nn -i "$BRIDGE" arp host "$1" 1>/dev/null 2>/tmp/tcpdump.out &
-    fi
-
-    # Wait for tcpdump
-    until grep -q 'listening on' /tmp/tcpdump.out; do sleep 1; done
-
-    # Start arping
-    local ARPING_CHECK="$(arping -fD -I "$BRIDGE" -s 0.0.0.0 -c 4 "$1" | awk '$1=="Sent" {printf $2 " "} $1=="Received" {print $2}')"
-
-    # Kill tcpdump
-    kill "$!" && wait "$!"
-
-    local TCPDUMP_COUNT="$(cat /tmp/tcpdump.out | grep  -m1 "packets captured$" | awk '{print $1}'; rm -f /tmp/tcpdump.out)"
-    local ARPING_COUNT="$(echo "$ARPING_CHECK" | awk '{print $1+$2}')"
-    local ARPING_SEND="$(echo "$ARPING_CHECK" | awk '{print $1}')"
-    local ARPING_RECEIVED="$(echo "$ARPING_CHECK" | awk '{print $2}')"
-
-    debug "TCPDUMP_COUNT=$TCPDUMP_COUNT"
-    debug "ARPING_COUNT=$ARPING_COUNT"
-    debug "ARPING_SEND=$ARPING_SEND"
-    debug "ARPING_RECEIVED=$ARPING_RECEIVED"
-
-    if [ "$ARPING_RECEIVED" == "0" ] && [ "$TCPDUMP_COUNT" == "$ARPING_COUNT" ]; then
-        debug "[ ARPING_RECEIVED == 0 ] && [ TCPDUMP_COUNT == ARPING_COUNT ]"
-        return 0
-    else
-        debug "[ ARPING_RECEIVED != 0 ] || [ TCPDUMP_COUNT != ARPING_COUNT ]"
-        return 1
-    fi
-
-}
-
-gateway_is_right() {
-    (IFS= echo "$NETWORKS_LIST") | grep -q "$(prev_ip $1)"
+getnodecidr() {
+    CA_CERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+    NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
+    curl -s --cacert $CA_CERT -H "Authorization: Bearer $TOKEN" "https://${KUBERNETES_PORT#*//}/api/v1/nodes/$1" | jq -r .spec.podCIDR
 }
 
 # ------------------------------------------------------------------------------------
@@ -125,9 +74,10 @@ gateway_is_right() {
 
 log "Starting bridge configuration"
 [ -z "$BRIDGE" ] && error "BRIDGE variable is not defined"
+[ -z "$NODE_NAME" ] && error "NODE_NAME variable is not defined"
 
 # Check if bridge interface exist
-if ! ip link show "$BRIDGE" &> /dev/null; then
+if ! ip link show "$BRIDGE" 1>/dev/null 2> /dev/null; then
 
     log "Adding new bridge $BRIDGE"
     ip link add dev "$BRIDGE" type bridge
@@ -142,6 +92,8 @@ fi
 log "Setting bridge $BRIDGE up"
 ip link set "$BRIDGE" up
 
+
+
 # ------------------------------------------------------------------------------------
 # Configure vlan
 # ------------------------------------------------------------------------------------
@@ -153,11 +105,11 @@ if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$CHECK_SLAVES" == 1 ]; then
 
     if [ ! -z "$VLAN" ]; then
         # check if vlan interface exist
-        if ip link show "$IFACE.$VLAN" &> /dev/null; then
+        if ip link show "$IFACE.$VLAN" 1> /dev/null 2> /dev/null; then
             log "VLAN interface $IFACE.$VLAN already exist"
         else
             log "Adding new VLAN interface $IFACE.$VLAN"
-            ip link add link "$IFACE" name "$IFACE.$VLAN" type vlan id "$VLAN"
+            ip link add link "$IFACE" name "$IFACE.$VLAN" mtu "$MTU" type vlan id "$VLAN"
         fi
         log "Setting vlan $IFACE.$VLAN up"
         ip link set dev "$IFACE.$VLAN" up
@@ -178,7 +130,7 @@ if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$CHECK_SLAVES" == 1 ]; then
         SLAVEIF="$IFACE"
     fi
 
-    if ! ip link show "$SLAVEIF" &> /dev/null; then
+    if ! ip link show "$SLAVEIF" 1> /dev/null 2> /dev/null; then
         error "$SLAVEIF does not exist"
     fi
 
@@ -200,78 +152,36 @@ fi
 log "Starting retriving parameters"
 
 POD_NETWORK="${POD_NETWORK:-10.244.0.0/16}"
-DIVISION_PREFIX="${DIVISION_PREFIX:-24}"
-
-log "POD_NETWORK=$POD_NETWORK"
-log "DIVISION_PREFIX=$DIVISION_PREFIX"
+NODE_NETWORK="$(getnodecidr "${NODE_NAME}")"
+if [ "$NODE_CIDR" = "null" ]; then
+   error "Failed to get node cidr"
+fi
 
 set -e
 
 export "POD_$(ipcalc -p "$POD_NETWORK")" # POD_PREFIX
-export "POD_$(ipcalc -b "$POD_NETWORK")" # POD_BROADCAST
 export "POD_$(ipcalc -n "$POD_NETWORK")" # POD_NETWORK
-export "FIRST_$(ipcalc -n "$POD_NETWORK/$DIVISION_PREFIX" )" # FIRST_NETWORK
-export "LAST_$(ipcalc -n "$POD_BROADCAST/$DIVISION_PREFIX" )" # LAST_NETWORK
+export "NODE_$(ipcalc -p "$NODE_NETWORK")" # NODE_PREFIX
+export "NODE_$(ipcalc -b "$NODE_NETWORK")" # NODE_BROADCAST
+export "NODE_$(ipcalc -n "$NODE_NETWORK")" # NODE_NETWORK
+export "NODE_IP=$(next_ip "$NODE_NETWORK")" # NODE_IP
 
 set +e
 
 debug "POD_PREFIX=$POD_PREFIX"
-debug "POD_BROADCAST=$POD_BROADCAST"
 debug "POD_NETWORK=$POD_NETWORK"
-debug "FIRST_NETWORK=$FIRST_NETWORK"
-debug "LAST_NETWORK=$LAST_NETWORK"
-
-NETWORKS_LIST="$(
-    CUR_NETWORK="$LAST_NETWORK"
-    until [ "$CUR_NETWORK" == "$FIRST_NETWORK" ]; do
-        echo "$CUR_NETWORK"
-        export CUR_"$(ipcalc -n "$(prev_ip "$CUR_NETWORK")/$DIVISION_PREFIX")"
-    done
-)"
+debug "NODE_PREFIX=$NODE_PREFIX"
+debug "NODE_BROADCAST=$NODE_BROADCAST"
+debug "NODE_NETWORK=$NODE_NETWORK"
+debug "NODE_IP=$NODE_IP"
 
 # ------------------------------------------------------------------------------------
 # Configure IP-address
 # ------------------------------------------------------------------------------------
 
-log "Starting configuring IP-address"
-
-# Check ip address
-IPADDR="$(ip -f inet -o addr show "$BRIDGE" | grep -o -m1 'inet [^ /]*' | cut -d' ' -f2)"
-
-# If ip not exist 
-if [ -z "$IPADDR" ]; then
-
-    if [ -f "$CNI_CONFIG" ]; then
-        CHECKING_IP=$(sed -n 's/.*"gateway": "\(.*\)",/\1/p' "$CNI_CONFIG")
-        log "Cni config found, taking old address $CHECKING_IP"
-        rm -f "$CNI_CONFIG"
-    fi
-    if [ -z $CHECKING_IP ] || ! gateway_is_right "$CHECKING_IP"; then
-        CHECKING_IP="$(random_gateway)"
-        log "New address generated $CHECKING_IP"
-    fi
-
-    log "Checking $CHECKING_IP"
-    while ! address_is_free "$CHECKING_IP"; do
-        log "Address $CHECKING_IP is not free"
-        CHECKING_IP="$(random_gateway)"
-        log "Taking another one $CHECKING_IP"
-    done
-
-    log "Address $CHECKING_IP is free, using it as gateway"
-    IPADDR="$CHECKING_IP"
-
-    log "Configuring $IPADDR/$POD_PREFIX on $BRIDGE"
-    ip addr change "$IPADDR/$POD_PREFIX" dev "$BRIDGE"
-
-else
-
-    if ! gateway_is_right "$IPADDR"; then
-        error "$BRIDGE already have IP address not from the list"
-    fi
-    log "IP-address $IPADDR already set, use it"
-
-fi
+log "Configuring $NODE_IP/$POD_PREFIX on $BRIDGE"
+ip addr flush dev "$BRIDGE"
+ip addr change "$NODE_IP/$POD_PREFIX" dev "$BRIDGE"
 
 # ------------------------------------------------------------------------------------
 # Configure cni
@@ -281,10 +191,10 @@ log "Starting generating CNI configuration"
 
 set -e
 
-GATEWAY="$IPADDR"
+GATEWAY="${NODE_IP}"
 SUBNET="${POD_NETWORK}/${POD_PREFIX}"
-FIRST_IP="$(next_ip "${GATEWAY}")"
-LAST_IP="$(prev_ip "$(ipcalc -b "${GATEWAY}/${DIVISION_PREFIX}" | cut -d= -f2)")"
+FIRST_IP="$(next_ip "${NODE_IP}")"
+LAST_IP="$(prev_ip "${NODE_BROADCAST}")"
 
 set +e
 

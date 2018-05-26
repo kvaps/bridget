@@ -15,7 +15,7 @@ In addition bridget can automatically configure VLAN and bridge interfaces for t
 
 ![](images/scheme.svg)
 
-bridget automatically retrieves IP-addresses from your pod-network, and configures cni for use it. Collision check is carried out each new run by arping tool.
+bridget automatically retrieves node cidr from your pod-network, and configures cni for use it.
 
 ## Parameters
 
@@ -27,7 +27,6 @@ All parameters passing as environment variables:
  - **MTU** *(default: `1500`)* - MTU value for cni config
  - **CHECK_SLAVES** *(example: `1`)* - Make bridget for configure slave interfaces, if bridge already exists.
  - **POD_NETWORK** *(default: `10.244.0.0/16`)* - Your pod network.
- - **DIVISION_PREFIX** *(default: `24`)* - Network CIDR prefix for devide your POD_NETWORK.
  - **DEBUG** *(example: `1`)* - Enable verbose output.
 
 ## Quick start
