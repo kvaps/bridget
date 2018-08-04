@@ -65,7 +65,7 @@ getnodecidr() {
     CA_CERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
     TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
     NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
-    curl -s --cacert $CA_CERT -H "Authorization: Bearer $TOKEN" "https://${KUBERNETES_PORT#*//}/api/v1/nodes/$1" | jq -r .spec.podCIDR
+    curl -sS -m 5 --cacert $CA_CERT -H "Authorization: Bearer $TOKEN" "https://${KUBERNETES_PORT#*//}/api/v1/nodes/$1" | jq -r .spec.podCIDR
 }
 
 # ------------------------------------------------------------------------------------
