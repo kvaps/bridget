@@ -153,7 +153,7 @@ log "Starting retriving parameters"
 
 POD_NETWORK="${POD_NETWORK:-10.244.0.0/16}"
 NODE_NETWORK="$(getnodecidr "${NODE_NAME}")"
-if [ "$NODE_NETWORK" = "null" ]; then
+if [ -z "$NODE_NETWORK" ] || [ "$NODE_NETWORK" = "null" ]; then
    error "Failed to get node cidr"
 fi
 
