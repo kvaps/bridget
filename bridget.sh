@@ -41,7 +41,7 @@ log() {
 }
 
 debug() {
-    if [ "$DEBUG" == 1 ]; then
+    if [ "$DEBUG" = 1 ]; then
         >&2 echo -en "[$(date '+%Y-%m-%d %H:%M:%S')] DEBUG:\t"
         >&2 echo "$1"
     fi
@@ -98,7 +98,7 @@ ip link set "$BRIDGE" up
 # Configure vlan
 # ------------------------------------------------------------------------------------
 
-if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$CHECK_SLAVES" == 1 ]; then
+if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$CHECK_SLAVES" = 1 ]; then
 
     log "Starting VLAN configuration"
     [ -z "$IFACE" ] && error "IFACE variable is not defined"
@@ -120,7 +120,7 @@ fi
 # Configure slaves
 # ------------------------------------------------------------------------------------
 
-if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$CHECK_SLAVES" == 1 ]; then
+if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$CHECK_SLAVES" = 1 ]; then
 
     log "Starting configuring slave interfaces"
 
