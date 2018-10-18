@@ -25,9 +25,9 @@ All parameters passing as environment variables:
  - **VLAN** *(example: `100`)* - VLAN id. If set, the new vlan-interface under IFACE will be created, then added to BRIDGE.
  - **IFACE** *(example: `eth0`)* - Physical interface for connect to bridge. Mandatory if VLAN is set, but can be used singly.
  - **MTU** *(default: `1500`)* - MTU value for cni config
- - **CHECK_SLAVES** *(example: `1`)* - Make bridget for configure slave interfaces, if bridge already exists.
+ - **CHECK_SLAVES** *(default: `1`)* - Make bridget for configure slave interfaces, if bridge already exists.
  - **POD_NETWORK** *(default: `10.244.0.0/16`)* - Your pod network.
- - **DEBUG** *(example: `1`)* - Enable verbose output.
+ - **DEBUG** *(default: `0`)* - Enable verbose output.
 
 ## Quick start
 

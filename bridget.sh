@@ -10,9 +10,9 @@ cat <<EOF
     - VLAN (example: 100)
     - IFACE (example: eth0)
     - MTU (default: 1500)
-    - CHECK_SLAVES (example: 1)
+    - CHECK_SLAVES (default: 1)
     - POD_NETWORK (default: 10.244.0.0/16)
-    - DEBUG (example: 1)
+    - DEBUG (default: 0)
 
 Short workflow:
 
@@ -41,7 +41,7 @@ log() {
 }
 
 debug() {
-    if [ "$DEBUG" = 1 ]; then
+    if [ "${DEBUG:-0}" = 1 ]; then
         >&2 echo -en "[$(date '+%Y-%m-%d %H:%M:%S')] DEBUG:\t"
         >&2 echo "$1"
     fi
@@ -98,7 +98,7 @@ ip link set "$BRIDGE" up
 # Configure vlan
 # ------------------------------------------------------------------------------------
 
-if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$CHECK_SLAVES" = 1 ]; then
+if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "${CHECK_SLAVES:-1}" = 1 ]; then
 
     log "Starting VLAN configuration"
     [ -z "$IFACE" ] && error "IFACE variable is not defined"
@@ -109,7 +109,7 @@ if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$CHECK_SLAVES" = 1 ]; then
             log "VLAN interface $IFACE.$VLAN already exist"
         else
             log "Adding new VLAN interface $IFACE.$VLAN"
-            ip link add link "$IFACE" name "$IFACE.$VLAN" mtu "$MTU" type vlan id "$VLAN"
+            ip link add link "$IFACE" name "$IFACE.$VLAN" mtu "${MTU}" type vlan id "$VLAN"
         fi
         log "Setting vlan $IFACE.$VLAN up"
         ip link set dev "$IFACE.$VLAN" up
@@ -120,7 +120,7 @@ fi
 # Configure slaves
 # ------------------------------------------------------------------------------------
 
-if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "$CHECK_SLAVES" = 1 ]; then
+if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "${CHECK_SLAVES:-1}" = 1 ]; then
 
     log "Starting configuring slave interfaces"
 
