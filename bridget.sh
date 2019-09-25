@@ -208,6 +208,7 @@ log "Writing $CNI_CONFIG"
 cat > $CNI_CONFIG <<EOT
 {
         "name": "bridget",
+        "cniVersion": "0.2.0",
         "type": "bridge",
         "bridge": "${BRIDGE}",
         "ipMasq": true,
