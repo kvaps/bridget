@@ -63,7 +63,7 @@ spec:
       hostPID: true
       containers:
       - name: bridget
-        image: kvaps/bridget
+        image: kvaps/bridget:v1.0.1
         env:
         - name: BRIDGE
           value: "cbr0"
