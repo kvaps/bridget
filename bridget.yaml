@@ -1,6 +1,6 @@
 ---
 kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: bridget
 rules:
@@ -25,7 +25,7 @@ rules:
       - patch
 ---
 kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: bridget
 roleRef:
@@ -43,12 +43,15 @@ metadata:
   name: bridget
   namespace: kube-system
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: bridget
   namespace: kube-system
 spec:
+  selector:
+    matchLabels:
+      app: bridget
   template:
     metadata:
       labels:
