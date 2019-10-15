@@ -58,8 +58,7 @@ spec:
         app: bridget
     spec:
       tolerations:
-      - key: node-role.kubernetes.io/master
-        operator: Exists
+      - operator: Exists
         effect: NoSchedule
       serviceAccountName: bridget
       hostNetwork: true
