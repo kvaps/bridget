@@ -67,7 +67,7 @@ There is not much alternatives for kubernetes if you want to use flat L2-network
 
 As a rule, if such solutions are provided, like L2-modes for [flannel](https://github.com/coreos/flannel) or [romana](https://github.com/romana/romana), it's still use difficult rules for nating and routing. Thanks to that you have flexible policies and some other things, but lose simplicity and productivity of simple L2-network.
 
-Bridget was created under [pipework](https://github.com/jpetazzo/pipework)'s inspiration.
+Bridget was created under [pipework](https://github.com/kvaps/kube-pipework)'s inspiration.
 pipework allows you to add single interfaces into your containers, but you need to do extra actions for achieve this.
 Besides Kubernetes knows nothing about any changes from this side.
 
