@@ -2,30 +2,30 @@
 
 ![](images/logo.svg)
 
-Simple bridge network for kubernetes 
+Simple bridge network for kubernetes
 
 ![](https://img.shields.io/docker/build/kvaps/bridget.svg)
 
 ## How it works
 
-bridget - it's short shell script, that helps you for organise simple bridge network for Kubernetes.
-There is no overlays, no politics. Just flat L2-network across all your hosts and pods.
+bridget is a short shell script that helps you to organise simple bridged network for Kubernetes.
+There are no overlays, no policies. Just a flat L2-network across all your hosts and pods.
 
 In addition bridget can automatically configure VLAN and bridge interfaces for that. See the picture:
 
 ![](images/scheme.svg)
 
-bridget automatically retrieves node cidr from your pod-network, and configures cni for use it.
+bridget automatically retrieves node cidr from your pod-network and configures cni to use it.
 
 ## Parameters
 
-All parameters passing as environment variables:
+All parameters are passed as environment variables:
 
  - **BRIDGE** *(example: `cbr0`)* - Bridge name. Mandatory option.
- - **VLAN** *(example: `100`)* - VLAN id. If set, the new vlan-interface under IFACE will be created, then added to BRIDGE.
- - **IFACE** *(example: `eth0`)* - Physical interface for connect to bridge. Mandatory if VLAN is set, but can be used singly.
+ - **VLAN** *(example: `100`)* - VLAN id. If set, a new vlan-interface under IFACE will be created and added to BRIDGE.
+ - **IFACE** *(example: `eth0`)* - Physical interface to connect bridge to. Mandatory if VLAN is set, but can also be used alone.
  - **MTU** *(default: `1500`)* - MTU value for cni config
- - **CHECK_SLAVES** *(default: `1`)* - Make bridget for configure slave interfaces, if bridge already exists.
+ - **CHECK_SLAVES** *(default: `1`)* - Make bridget configure slave interfaces if the bridge already exists.
  - **POD_NETWORK** *(default: `10.244.0.0/16`)* - Your pod network.
  - **DEBUG** *(default: `0`)* - Enable verbose output.
 
@@ -38,13 +38,15 @@ All parameters passing as environment variables:
 curl -O https://raw.githubusercontent.com/kvaps/bridget/master/bridget.yaml
 ```
 
-* Edit wanted parameters:
+* Edit desired parameters:
 ```
 vim bridget.yaml
 ```
 
-By default bridget uses `cbr0` bridge that nowhere connected, so you need to set IFACE and VLAN parameters, or configure your host system for connect physical interface this bridge byself.
-Please make sure that you have no any IP-address on the bridge, because it will be configured automatcally.
+By default bridget uses `cbr0` bridge that isn't connected anywhere, so you need to either set IFACE and VLAN parameters
+or configure your host system to connect the physical interface to this bridge manually.
+
+Please make sure that you have no IP address on the bridge because it will be configured automatically.
 
 * Run daemonset:
 ```
@@ -63,17 +65,22 @@ kubectl create -f bridget.yaml
 
 ## Alternatives
 
-There is not much alternatives for kubernetes if you want to use flat L2-network.
+There aren't a lot of alternatives if you want to use flat L2-network with kubernetes.
 
-As a rule, if such solutions are provided, like L2-modes for [flannel](https://github.com/coreos/flannel) or [romana](https://github.com/romana/romana), it's still use difficult rules for nating and routing. Thanks to that you have flexible policies and some other things, but lose simplicity and productivity of simple L2-network.
+Even with most of the existing solutions like [flannel](https://github.com/coreos/flannel)'s or
+[romana](https://github.com/romana/romana)'s L2 modes it's still quite difficult to use your own rules
+for NATing and routing. So you gain flexible policies and some other things, but lose simplicity and
+productivity of a simple L2-network.
 
 Bridget was created under [pipework](https://github.com/kvaps/kube-pipework)'s inspiration.
-pipework allows you to add single interfaces into your containers, but you need to do extra actions for achieve this.
-Besides Kubernetes knows nothing about any changes from this side.
+pipework allows you to add single interfaces to your containers, but with additional manual actions,
+and Kubernetes doesn't know anything about your manual changes.
 
-Unlike pipework bridget uses [CNI](https://github.com/containernetworking/cni) for configuring pod interfaces, as a result all configuration occurs automatically, and kubernetes gets right IP-addresses.
+Unlike pipework, bridget uses [CNI](https://github.com/containernetworking/cni) to configure pod interfaces.
+As a result all configuration occurs automatically and kubernetes gets right IP-addresses.
 
-As alternative you can also consider сreate your own CNI configuration with [bridge](https://github.com/containernetworking/plugins/tree/master/plugins/main/bridge) or [macvlan](https://github.com/containernetworking/plugins/tree/master/plugins/main/macvlan) plugin for each your host.
+Another alternative is to сreate your own CNI configuration with [bridge](https://github.com/containernetworking/plugins/tree/master/plugins/main/bridge)
+or [macvlan](https://github.com/containernetworking/plugins/tree/master/plugins/main/macvlan) plugin for each of your hosts.
 
 ## Contact
 
@@ -82,12 +89,12 @@ As alternative you can also consider сreate your own CNI configuration with [br
 
 ## Contributing
 
-To contribute bug patches or new features, you can use the github Pull Request model. It is assumed that code and documentation are contributed under the Apache License 2.0. 
+Use Pull Requests to contribute bugfixes or new features. It is assumed that your code and documentation are contributed under the Apache License 2.0.
 
 ## Reporting bugs
 
-Please use github issue-tracker for submit bugs
+Please use github issue-tracker to submit bugs
 
 ## License
 
-bridget is under the Apache 2.0 license. See the [LICENSE](LICENSE) file for details.
+bridget is distributed under the Apache 2.0 license. See the [LICENSE](LICENSE) file for details.
