@@ -16,14 +16,14 @@ cat <<EOF
 
 Short workflow:
 
-* If bridge exists it will be used, if not exist it will be created
+* If the bridge exists it will be used, otherwise it will be created
 
-* If VLAN and IFACE is set, the next chain will be created:
+* If VLAN and IFACE are set, the following chain will be created:
     IFACE <-- VLAN <-- BRIDGE
 
-* IP-address will set automatically. This IP-address
+* IP-address will be set automatically. This IP-address
   will be used as default gateway for containers
-  for make possible kubernetes-services working.
+  to make kubernetes services work.
 
 EOF
 }
@@ -180,7 +180,12 @@ debug "NODE_IP=$NODE_IP"
 # ------------------------------------------------------------------------------------
 
 log "Configuring $NODE_IP/$POD_PREFIX on $BRIDGE"
-ip addr flush dev "$BRIDGE"
+ip -o addr show "$BRIDGE" | grep -o 'inet [^ ]\+' | while read _ IP; do
+    # Remove bridge addresses from the same subnet, don't touch other addresses
+    if [ $(ipcalc -b "$IP") = $(ipcalc -b "$POD_NETWORK/$POD_PREFIX") -a "$IP" != "$NODE_IP/$POD_PREFIX" ]; then
+        ip addr del "$IP" dev "$BRIDGE"
+    fi
+done
 ip addr change "$NODE_IP/$POD_PREFIX" dev "$BRIDGE"
 
 # ------------------------------------------------------------------------------------
