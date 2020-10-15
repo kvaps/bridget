@@ -3,7 +3,7 @@
 CNI_CONFIG="${CNI_CONFIG:-/etc/cni/net.d/10-bridget.conf}"
 
 usage() {
-cat <<EOF
+    cat <<EOF
 
   Available variables:
     - BRIDGE (example: cbr0)
@@ -48,16 +48,16 @@ debug() {
 }
 
 next_ip() {
-    local IP_HEX=$(printf '%.2X%.2X%.2X%.2X\n' `echo $1 | sed -e 's/\./ /g'`)
-    local NEXT_IP_HEX=$(printf %.8X `echo $(( 0x$IP_HEX + 1 ))`)
-    local NEXT_IP=$(printf '%d.%d.%d.%d\n' `echo $NEXT_IP_HEX | sed -r 's/(..)/0x\1 /g'`)
+    local IP_HEX=$(printf '%.2X%.2X%.2X%.2X\n' $(echo $1 | sed -e 's/\./ /g'))
+    local NEXT_IP_HEX=$(printf %.8X $(echo $((0x$IP_HEX + 1))))
+    local NEXT_IP=$(printf '%d.%d.%d.%d\n' $(echo $NEXT_IP_HEX | sed -r 's/(..)/0x\1 /g'))
     echo $NEXT_IP
 }
 
 prev_ip() {
-    local IP_HEX=$(printf '%.2X%.2X%.2X%.2X\n' `echo $1 | sed -e 's/\./ /g'`)
-    local PREV_IP_HEX=$(printf %.8X `echo $(( 0x$IP_HEX - 1 ))`)
-    local PREV_IP=$(printf '%d.%d.%d.%d\n' `echo $PREV_IP_HEX | sed -r 's/(..)/0x\1 /g'`)
+    local IP_HEX=$(printf '%.2X%.2X%.2X%.2X\n' $(echo $1 | sed -e 's/\./ /g'))
+    local PREV_IP_HEX=$(printf %.8X $(echo $((0x$IP_HEX - 1))))
+    local PREV_IP=$(printf '%d.%d.%d.%d\n' $(echo $PREV_IP_HEX | sed -r 's/(..)/0x\1 /g'))
     echo $PREV_IP
 }
 
@@ -77,7 +77,7 @@ log "Starting bridge configuration"
 [ -z "$NODE_NAME" ] && error "NODE_NAME variable is not defined"
 
 # Check if bridge interface exist
-if ! ip link show "$BRIDGE" 1>/dev/null 2> /dev/null; then
+if ! ip link show "$BRIDGE" 1>/dev/null 2>/dev/null; then
 
     log "Adding new bridge $BRIDGE"
     ip link add dev "$BRIDGE" type bridge
@@ -92,8 +92,6 @@ fi
 log "Setting bridge $BRIDGE up"
 ip link set "$BRIDGE" up
 
-
-
 # ------------------------------------------------------------------------------------
 # Configure vlan
 # ------------------------------------------------------------------------------------
@@ -105,7 +103,7 @@ if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "${CHECK_SLAVES:-1}" = 1 ]; then
 
     if [ ! -z "$VLAN" ]; then
         # check if vlan interface exist
-        if ip link show "$IFACE.$VLAN" 1> /dev/null 2> /dev/null; then
+        if ip link show "$IFACE.$VLAN" 1>/dev/null 2>/dev/null; then
             log "VLAN interface $IFACE.$VLAN already exist"
         else
             log "Adding new VLAN interface $IFACE.$VLAN"
@@ -130,18 +128,18 @@ if ([ ! -z "$VLAN" ] || [ ! -z "$IFACE" ]) && [ "${CHECK_SLAVES:-1}" = 1 ]; then
         SLAVEIF="$IFACE"
     fi
 
-    if ! ip link show "$SLAVEIF" 1> /dev/null 2> /dev/null; then
+    if ! ip link show "$SLAVEIF" 1>/dev/null 2>/dev/null; then
         error "$SLAVEIF does not exist"
     fi
 
     # check if slave interface contains right master
-    MASTERIF="$(ip -o link show "$SLAVEIF" | grep -o -m1 'master [^ ]\+' | cut -d' ' -f2 )"
+    MASTERIF="$(ip -o link show "$SLAVEIF" | grep -o -m1 'master [^ ]\+' | cut -d' ' -f2)"
 
     case "$MASTERIF" in
-        "$BRIDGE" ) log "$SLAVEIF already member of $BRIDGE" ;;
-        ""        ) log "Adding $SLAVEIF as member to $BRIDGE"
-                    ip link set "$SLAVEIF" master "$BRIDGE" ;;
-        *         ) error "interface $SLAVEIF have another master" ;;
+    "$BRIDGE") log "$SLAVEIF already member of $BRIDGE" ;;
+    ""       ) log "Adding $SLAVEIF as member to $BRIDGE"
+               ip link set "$SLAVEIF" master "$BRIDGE"  ;;
+    *        ) error "interface $SLAVEIF have another master" ;;
     esac
 fi
 
@@ -154,20 +152,22 @@ log "Starting retriving parameters"
 POD_NETWORK="${POD_NETWORK:-10.244.0.0/16}"
 NODE_NETWORK="$(getnodecidr "${NODE_NAME}")"
 if [ -z "$NODE_NETWORK" ] || [ "$NODE_NETWORK" = "null" ]; then
-   error "Failed to get node cidr"
+    error "Failed to get node cidr"
 fi
 
 set -e
 
-export "POD_$(ipcalc -p "$POD_NETWORK")" # POD_PREFIX
-export "POD_$(ipcalc -n "$POD_NETWORK")" # POD_NETWORK
-export "NODE_$(ipcalc -p "$NODE_NETWORK")" # NODE_PREFIX
-export "NODE_$(ipcalc -b "$NODE_NETWORK")" # NODE_BROADCAST
-export "NODE_$(ipcalc -n "$NODE_NETWORK")" # NODE_NETWORK
+export "POD_$(ipcalc -b "$POD_NETWORK")"    # POD_BROADCAST
+export "POD_$(ipcalc -p "$POD_NETWORK")"    # POD_PREFIX
+export "POD_$(ipcalc -n "$POD_NETWORK")"    # POD_NETWORK
+export "NODE_$(ipcalc -p "$NODE_NETWORK")"  # NODE_PREFIX
+export "NODE_$(ipcalc -b "$NODE_NETWORK")"  # NODE_BROADCAST
+export "NODE_$(ipcalc -n "$NODE_NETWORK")"  # NODE_NETWORK
 export "NODE_IP=$(next_ip "$NODE_NETWORK")" # NODE_IP
 
 set +e
 
+debug "POD_BROADCAST=$POD_BROADCAST"
 debug "POD_PREFIX=$POD_PREFIX"
 debug "POD_NETWORK=$POD_NETWORK"
 debug "NODE_PREFIX=$NODE_PREFIX"
@@ -182,7 +182,7 @@ debug "NODE_IP=$NODE_IP"
 log "Configuring $NODE_IP/$POD_PREFIX on $BRIDGE"
 ip -o addr show "$BRIDGE" | grep -o 'inet [^ ]\+' | while read _ IP; do
     # Remove bridge addresses from the same subnet, don't touch other addresses
-    if [ $(ipcalc -b "$IP") = $(ipcalc -b "$POD_NETWORK/$POD_PREFIX") -a "$IP" != "$NODE_IP/$POD_PREFIX" ]; then
+    if [ $(ipcalc -b "$IP") = "$POD_BROADCAST" ] && [ "$IP" != "$NODE_IP/$POD_PREFIX" ]; then
         ip addr del "$IP" dev "$BRIDGE"
     fi
 done
@@ -210,7 +210,7 @@ debug "LAST_IP=$LAST_IP"
 
 log "Writing $CNI_CONFIG"
 
-cat > $CNI_CONFIG <<EOT
+cat >$CNI_CONFIG <<EOT
 {
         "name": "bridget",
         "cniVersion": "0.2.0",
