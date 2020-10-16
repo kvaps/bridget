@@ -182,7 +182,7 @@ debug "NODE_IP=$NODE_IP"
 log "Configuring $NODE_IP/$POD_PREFIX on $BRIDGE"
 ip -o addr show "$BRIDGE" | grep -o 'inet [^ ]\+' | while read _ IP; do
     # Remove bridge addresses from the same subnet, don't touch other addresses
-    if [ $(ipcalc -b "$IP") = "$POD_BROADCAST" ] && [ "$IP" != "$NODE_IP/$POD_PREFIX" ]; then
+    if [ "$(ipcalc -b "$IP")" = "BROADCAST=${POD_BROADCAST}" ] && [ "$IP" != "$NODE_IP/$POD_PREFIX" ]; then
         ip addr del "$IP" dev "$BRIDGE"
     fi
 done
